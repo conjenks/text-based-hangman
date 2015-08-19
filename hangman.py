@@ -15,7 +15,7 @@ with open('words/food_drink') as e:
 
 categories = [animal_list, jobs_list, clothes_list, countries_list, food_drink_list]
 category_names = ["Animals", "Jobs", "Clothes", "Countries", "Food & Drink"]  #  create a list of categories and a corresponding
-                                                                                #  list of category names
+                                                                               #  list of category names
 
 print("Please select a difficulty:")
 print("Easy (1)  Medium (2)  Hard (3)")
@@ -28,9 +28,9 @@ difficulties = {1: "Easy", 2: "Medium", 3: "Hard"}
 print("Difficulty: %s" %difficulties[diff])
 
 
-categ = randint(0,4)
-cat_name = category_names[categ]
-categ = categories[categ]
+c = randint(0,4)
+cat_name = category_names[c]
+category = categories[c]
 
 print("Your category is %s." %cat_name)
 print("You are allowed to guess SIX wrong letters.")
@@ -48,38 +48,45 @@ def select_word(category, diff):  #  easy is less than 6 letters, medium is 6 le
 
 print()
 
-word = select_word(categ, diff)
+word = select_word(category, diff)
 word = word.upper()
 
 def game(word):
     guesses = 0
     working_word = "-"*len(word)
-    print(working_word)
+    guessed_letters = ""
     while guesses < 7:
+        print(working_word)
+        i = 6 - guesses
+        print("You have %s wrong guess(es) left." %i)
         guess = input("Guess a letter: ")
         print()
         guess = guess.upper()
         assert len(guess) == 1
         if guess in word:
-            for letter in word:
-                if guess == letter:
-                    for i, char in enumerate(word):
-                        if char == letter:
-                            working_word = [char for char in working_word] # convert to list to support item assignment
-                            working_word[i] = char                           # in next line
-                            working_word = ''.join(working_word)
+            for i, char in enumerate(word):
+                if char == guess:
+                    working_word = [char for char in working_word] # convert to list to support item assignment
+                    working_word[i] = char                           # in next line
+                    working_word = ''.join(working_word)
             print("Got one!")
+            print(working_word)
         else:
             print("Nope!")
-        print(working_word)
-        print()
+            guesses += 1
         if working_word == word:
             break
-        guesses += 1
+        print("______________________________________")
+        print()
+        guessed_letters = guessed_letters + ("%s " %guess)
+        print("The letters you have guessed are:")
+        print(guessed_letters)
+        print()
     if working_word == word:
         print("You win!")
     else:
         print("You lose!")
+        print(word)
 
 game(word)
 
