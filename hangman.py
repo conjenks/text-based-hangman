@@ -1,98 +1,124 @@
-from random import randint
+import os, random
 
-print("Welcome to Hangman! Can you guess all of the letters in the word?")
+def word_pool():
+    categories = []
+    os.chdir('words')
+    for file in os.listdir('.'):
+        with open(file) as f:
+            category = []
+            words = f.read().splitlines()
+            for word in words:
+                category.append(word)
+            categories.append(category)
+    return categories
 
-with open('words/animals') as a:  #Create the pool of words to be randomly chosen from, and split it up into categories.
-    animal_list = a.read().splitlines()
-with open ('words/jobs') as b:
-    jobs_list = b.read().splitlines()
-with open('words/clothes') as c:
-    clothes_list = c.read().splitlines()
-with open('words/countries') as d:
-    countries_list = d.read().splitlines()
-with open('words/food_drink') as e:
-    food_drink_list = e.read().splitlines()
+def select_category():
+    categories = word_pool()
+    category_names = ["Animals", "Clothes", "Countries", "Food & Drink", "Jobs"]
+    i = random.randint(0,4)
+    category = categories[i]
+    cat_name = category_names[i]
+    return category, cat_name
 
-categories = [animal_list, jobs_list, clothes_list, countries_list, food_drink_list]
-category_names = ["Animals", "Jobs", "Clothes", "Countries", "Food & Drink"]  #Create a list of categories and a corresponding
-                                                                              #list of category names
-
-print("Please select a difficulty:")
-print("Easy (1)  Medium (2)  Hard (3)")
-diff = int(input(""))
-
-assert diff in [1, 2, 3] #I think there's a better way of doing this but I don't know how.
-print()
-
-difficulties = {1: "Easy", 2: "Medium", 3: "Hard"}
-print("Difficulty: %s" %difficulties[diff])
-
-
-c = randint(0,4)
-cat_name = category_names[c]
-category = categories[c]
-
-print("Your category is %s." %cat_name)
-print("You are allowed to guess SIX wrong letters.")
-
+def select_difficulty():
+    difficulties = {
+        1:"Easy",
+        2:"Medium",
+        3:"Hard"
+    }
+    while True:
+        try:
+            diff = int(input(""))
+            if diff in [1, 2, 3]:
+                diff_string = difficulties[diff]
+                return diff, diff_string
+        except:
+            continue
 
 def select_word(category, diff):  #Easy is less than 6 letters; medium is 6 letters to 8 letters; hard is 9 letters or more.
     if diff == 1:
-        words = [word for word in category if len(word) < 6]
+        choices = [word for word in category if len(word) < 6]
     elif diff == 2:
-        words = [word for word in category if len(word) > 5 and len(word) < 9]
+        choices = [word for word in category if len(word) > 5 and len(word) < 9]
     elif diff == 3:
-        words = [word for word in category if len(word) > 8]
-    word = words[randint(0,len(words)-1)]
+        choices = [word for word in category if len(word) > 8]
+    word = random.choice(choices).upper()
     return word
 
-print()
-
-word = select_word(category, diff)
-word = word.upper()
-
-def game(word): #Should the whole game be one function?
-    guesses = 0
-    working_word = "-"*len(word)
-    guessed_letters = ""
-    while guesses < 7:
-        print(working_word)
-        i = 6 - guesses
-        print("You have %s wrong guess(es) left." %i)
-        guess = input("Guess a letter: ")
-        print()
+def get_guess():
+    while True:
+        guess = input("\n")
         guess = guess.upper()
-        assert len(guess) == 1
-        if guess in word:
-            for i, char in enumerate(word):
-                if char == guess:
-                    working_word = [char for char in working_word] #Convert to list to support item assignment
-                    working_word[i] = char                         #in next line
-                    working_word = ''.join(working_word)
-            print("Got one!")
-            print(working_word)
+        if guess in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+            return guess
         else:
-            print("Nope!")
-            guesses += 1
-        if working_word == word:
-            break
-        print("______________________________________")
-        print()
-        guessed_letters = guessed_letters + ("%s " %guess)
-        print("The letters you have guessed are:")
-        print(guessed_letters)
-        print()
-    if working_word == word:
-        print()
-        print("You win!")
+            print("That is not a valid guess. Please choose again.")
+            continue
+
+def check_guess(guess, guessed_letters):
+    if guess in guessed_letters:
+        return False
+    else:
+        guessed_letters = guessed_letters + "%s " %guess
+        return guessed_letters
+
+def update_word(word, working_word, guess):
+    for i, char in enumerate(word):
+        if char == guess:
+            working_word = [char for char in working_word] #Convert to list to support item assignment
+            working_word[i] = char                         #in next line
+            working_word = ''.join(working_word)
+    return working_word
+
+def game(word):
+    guesses_left = 6
+    guessed_letters = ""
+    working_word = "-"*len(word)
+    print(working_word)
+    while guesses_left > 0:
+        print("Guess a letter:")
+        guess = get_guess()
+        if check_guess(guess, guessed_letters) == False:
+            print("You already guessed that!")
+            continue
+        else:
+            guessed_letters = check_guess(guess, guessed_letters)
+        if guess not in word:
+            print("Wrong!")
+            guesses_left -= 1
+            print("You have %s wrong guess(es) left." %guesses_left)
+            if guesses_left == 0:
+                break
+        else:
+            print("Got one!")
+            working_word = update_word(word, working_word, guess)
+            if working_word == word:
+                break
+        print(working_word)
+        print("So far, you have guessed: \n", guessed_letters)
+    return working_word
+
+def main():
+    print("Welcome to Hangman! Can you guess all of the letters in the word? \n")
+    category, cat_name = select_category()
+    print("Your category is %s. \n" %cat_name)
+    print("Please select a difficulty:")
+    print("Easy (1)  Medium (2)  Hard (3)")
+    diff, diff_string = select_difficulty()
+    print("Difficulty: %s \n" %diff_string)
+    word = select_word(category, diff)
+    final_word = game(word)
+    if final_word == word:
+        print(final_word)
+        print("You won!")
     else:
         print("You lose!")
-        print(word)
+        print("The word was %s." %word)
+    print()
+    input("Press Enter to exit.")
 
-game(word)
-
-print()
-input("Press Enter to exit.") #Is this a good way of ending the game?
+if __name__ == '__main__':
+    main()
 
 
 
